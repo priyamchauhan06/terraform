@@ -58,5 +58,5 @@ resource "aws_default_route_table" "def_route_table" {
 #subnet association to route table
 resource "aws_route_table_association" "pub-subnet-associatn" {
   subnet_id      = aws_subnet.publc_subnet.id
-  route_table_id = aws_route_table.def_route_table.id
+  route_table_id = aws_default_route_table.def_route_table.id
 }
