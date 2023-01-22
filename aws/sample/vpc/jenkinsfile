@@ -1,0 +1,74 @@
+properties([ parameters([
+  string( name: 'region', defaultValue: 'ap-south-1'),
+  choice(choices: ['create/modify', 'destroy'], name: 'action')
+]), pipelineTriggers([]) ])
+
+
+
+node {
+    echo "building on master node"
+    def infra_destroy
+    echo "you have selected to ${env.action} the  infra"
+    if(action == "create/modify"){
+        infra_destroy = false
+    }else{
+        infra_destroy = true
+    }
+    if (infra_destroy == false){
+        stage ('git checkout'){
+            git changelog: true, poll: true, url: 'https://github.com/priyamchauhan06/terraform.git', branch: 'master'
+        }
+        echo "region is ${env.region}"
+        stage ('terraform init'){
+    
+            dir ('aws/sample/vpc/'){
+                withCredentials([string(credentialsId: 'AWS_ACCESS_KEY', variable: 'aws_access_key'), string(credentialsId: 'AWS_SECRET_KEY', variable: 'aws_secret_key')]) {
+    
+                    sh "terraform init"
+                    sh "terraform plan -var 'region=${env.region}' -var 'aws_access_key=${env.aws_access_key}' -var 'aws_secret_key=${env.aws_secret_key}' -out terraform.tfplan" 
+                
+                    stash name: "terraform-plan", includes: "terraform.tfplan"
+                }
+                
+                
+        
+            }    
+        }
+        
+        stage('TerraformApply'){
+            script{
+                def apply = false
+                try {
+                    input message: 'Can you please confirm the apply', ok: 'Ready to Apply the Config'
+                    apply = true
+                } catch (err) {
+                    apply = false
+                     currentBuild.result = 'UNSTABLE'
+                }
+                if(apply){
+                    dir('aws/3tierapp/'){
+                        unstash "terraform-plan"
+                        sh 'terraform apply terraform.tfplan'
+                    }
+                }
+            }
+        }
+    }
+    if(infra_destroy == true){
+        def destroy = false
+        try {
+                input message: 'Can you please confirm thay you want to destroy the infra', ok: 'Confirm, please destroy'
+                destroy = true
+            } catch (err) {
+                destroy = false
+                currentBuild.result = 'UNSTABLE'
+            } 
+            if(destroy){
+                withCredentials([string(credentialsId: 'AWS_ACCESS_KEY', variable: 'aws_access_key'), string(credentialsId: 'AWS_SECRET_KEY', variable: 'aws_secret_key')]) {
+                    dir('aws/3tierapp/'){
+                        sh "terraform destroy -var 'region=${env.region}' -var 'aws_access_key=${env.aws_access_key}' -var 'aws_secret_key=${env.aws_secret_key}' -auto-approve"
+                    }
+                }
+            }
+    }
+}
