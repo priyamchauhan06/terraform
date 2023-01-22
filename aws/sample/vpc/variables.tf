@@ -20,6 +20,6 @@ variable "pvt_subnet_cidr_range" {
 
 variable "pub_subnet_cidr_range" {
   description = "IP Range of public subnet to be created"
-  default     = "10.1.0.1/24"
+  default     = "10.1.1.0/24"
 }
 
