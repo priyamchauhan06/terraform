@@ -24,3 +24,16 @@ resource "aws_subnet" "privt_subnet" {
     Name = "privt-subnet"
   }
 }
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.vpc.id
+
+  tags = {
+    Name = "dev-vpc-igw"
+  }
+}
+
+resource "aws_internet_gateway_attachment" "igw_attachment" {
+  internet_gateway_id = aws_internet_gateway.igw.id
+  vpc_id              = aws_vpc.vpc.id
+}
