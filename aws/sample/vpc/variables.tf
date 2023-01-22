@@ -1,7 +1,7 @@
 variable "region" {
   description = "aws region in which deployment has to be done"
   type = string
-  default = "ap-south-1"
+  default = "us-east-1"
 }
 variable "aws_access_key" {
   description = "aws access key"
