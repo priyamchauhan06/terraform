@@ -1,5 +1,4 @@
 properties([ parameters([
-  string( name: 'region', defaultValue: 'ap-south-1'),
   choice(choices: ['create/modify', 'destroy'], name: 'action')
 ]), pipelineTriggers([]) ])
 
@@ -26,7 +25,7 @@ node {
                 withCredentials([string(credentialsId: 'AWS_ACCESS_KEY', variable: 'aws_access_key'), string(credentialsId: 'AWS_SECRET_KEY', variable: 'aws_secret_key')]) {
     
                     sh "terraform init"
-                    sh "terraform plan -var 'region=${env.region}' -var 'aws_access_key=${env.aws_access_key}' -var 'aws_secret_key=${env.aws_secret_key}' -out terraform.tfplan" 
+                    sh "terraform plan -var 'aws_access_key=${env.aws_access_key}' -var 'aws_secret_key=${env.aws_secret_key}' -out terraform.tfplan" 
                 
                     stash name: "terraform-plan", includes: "terraform.tfplan"
                 }
@@ -40,7 +39,7 @@ node {
             script{
                 def apply = false
                 try {
-                    input message: 'Can you please confirm the apply', ok: 'Ready to Apply the Config'
+                    input message: 'Can you please confirm the apply', ok: 'Procede with terraform apply'
                     apply = true
                 } catch (err) {
                     apply = false
@@ -67,7 +66,7 @@ node {
             if(destroy){
                 withCredentials([string(credentialsId: 'AWS_ACCESS_KEY', variable: 'aws_access_key'), string(credentialsId: 'AWS_SECRET_KEY', variable: 'aws_secret_key')]) {
                     dir('aws/sample/vpc/'){
-                        sh "terraform destroy -var 'region=${env.region}' -var 'aws_access_key=${env.aws_access_key}' -var 'aws_secret_key=${env.aws_secret_key}' -auto-approve"
+                        sh "terraform destroy -var 'aws_access_key=${env.aws_access_key}' -var 'aws_secret_key=${env.aws_secret_key}' -auto-approve"
                     }
                 }
             }
